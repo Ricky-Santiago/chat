@@ -1,33 +1,23 @@
 package servlets;
 
-import beans.UserSession;
+import beans.Message;
+import storage.ChatStorage;
 import com.google.gson.Gson;
 
-import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.*;
+import javax.servlet.ServletException;
 import java.io.IOException;
+import java.util.*;
 
 @WebServlet("/chat-messages")
 public class ChatMessagesServlet extends HttpServlet {
-
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-
-        HttpSession session = request.getSession(false);
-        if (session == null) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            return;
-        }
-
-        UserSession userSession = (UserSession) session.getAttribute("userSession");
-        if (userSession == null) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            return;
-        }
-
-        response.setContentType("application/json");
-        String jsonMessages = new Gson().toJson(userSession.getMessages());
-        response.getWriter().write(jsonMessages);
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        resp.setContentType("application/json");
+        Map<String,Object> result = new HashMap<>();
+        result.put("users", ChatStorage.getUsers());
+        result.put("messages", ChatStorage.getMessages());
+        resp.getWriter().write(new Gson().toJson(result));
     }
 }

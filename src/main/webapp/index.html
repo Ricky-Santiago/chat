@@ -2,10 +2,12 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Chat Seguro con DH</title>
+  <title>Chat entre Dos Usuarios</title>
   <style>
     .hidden { display: none; }
     #chatBox { border: 1px solid #ccc; height: 300px; overflow-y: scroll; padding: 10px; }
+    #users { margin-bottom: 10px; }
+    .user { font-weight: bold; }
   </style>
 </head>
 <body>
@@ -17,20 +19,8 @@
 
   <div id="chatInterface" class="hidden">
     <h2>Bienvenido, <span id="userDisplay"></span></h2>
-
-    <div>
-      <p>Tu clave pública: <span id="myPublicKey"></span></p>
-      <input type="text" id="otherPublicKey" placeholder="Clave pública del otro usuario" />
-      <button onclick="simulateKeyExchange()">Intercambiar clave</button>
-    </div>
-
-    <div id="keyStatus" class="hidden">
-      <p><strong>Intercambio realizado con éxito.</strong></p>
-      <p id="sharedKey"></p>
-    </div>
-
+    <div id="users"></div>
     <div id="chatBox"></div>
-
     <input type="text" id="chatMessage" placeholder="Escribe un mensaje" />
     <button onclick="sendMessage()">Enviar</button>
   </div>
@@ -41,62 +31,48 @@
     function loginUser() {
       username = document.getElementById('username').value;
       if (!username) return;
-
-      fetch('/key-exchange', {
+      fetch('/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: 'action=init&username=' + encodeURIComponent(username)
-      })
-      .then(res => res.text())
-      .then(publicKey => {
-        document.getElementById('loginForm').classList.add('hidden');
-        document.getElementById('chatInterface').classList.remove('hidden');
-        document.getElementById('userDisplay').innerText = username;
-        document.getElementById('myPublicKey').innerText = publicKey;
-        loadMessages();
-      });
-    }
-
-    function simulateKeyExchange() {
-      const otherKey = document.getElementById('otherPublicKey').value;
-      if (!otherKey) {
-        alert("Ingresa una clave pública válida");
-        return;
-      }
-
-      fetch('/key-exchange', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: 'action=exchange&otherPublicKey=' + encodeURIComponent(otherKey)
-      })
-      .then(res => res.text())
-      .then(sharedKey => {
-        document.getElementById('keyStatus').classList.remove('hidden');
-        document.getElementById('sharedKey').innerText = "Clave compartida: " + sharedKey;
+        body: 'username=' + encodeURIComponent(username)
+      }).then(res => {
+        if (res.ok) {
+          document.getElementById('loginForm').classList.add('hidden');
+          document.getElementById('chatInterface').classList.remove('hidden');
+          document.getElementById('userDisplay').innerText = username;
+          loadMessages();
+          setInterval(loadMessages, 1500);
+        } else {
+          alert("Error al iniciar sesión");
+        }
       });
     }
 
     function sendMessage() {
       const msg = document.getElementById('chatMessage').value.trim();
       if (!msg) return;
-
       fetch('/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: 'message=' + encodeURIComponent(msg)
-      })
-      .then(() => {
-        document.getElementById('chatMessage').value = '';
-        loadMessages();
+      }).then(res => {
+        if (res.ok) {
+          document.getElementById('chatMessage').value = '';
+          loadMessages();
+        }
       });
     }
 
     function loadMessages() {
       fetch('/chat-messages')
         .then(res => res.json())
-        .then(messages => {
+        .then(data => {
+          // Usuarios conectados
+          document.getElementById('users').innerHTML = 
+            'Usuarios conectados: ' + Array.from(data.users).map(u => `<span class="user">${u}</span>`).join(', ');
+          // Mensajes
           const chatBox = document.getElementById('chatBox');
-          chatBox.innerHTML = messages.map(m => `<div>${m}</div>`).join('');
+          chatBox.innerHTML = data.messages.map(m => `<div><b>${m.sender}:</b> ${m.content}</div>`).join('');
           chatBox.scrollTop = chatBox.scrollHeight;
         });
     }
