@@ -31,7 +31,7 @@
     function loginUser() {
       username = document.getElementById('username').value;
       if (!username) return;
-      fetch('/login', {
+      fetch('login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: 'username=' + encodeURIComponent(username)
@@ -51,7 +51,7 @@
     function sendMessage() {
       const msg = document.getElementById('chatMessage').value.trim();
       if (!msg) return;
-      fetch('/chat', {
+      fetch('chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: 'message=' + encodeURIComponent(msg)
@@ -64,7 +64,7 @@
     }
 
     function loadMessages() {
-      fetch('/chat-messages')
+      fetch('chat-messages')
         .then(res => res.json())
         .then(data => {
           // Usuarios conectados
