@@ -137,5 +137,39 @@ public class UsuarioJpaController implements Serializable {
             em.close();
         }
     }
-    
+
+    public Usuario validarUsuario(String logi, String pass) {
+        EntityManager em = getEntityManager();
+        try {
+            List<Usuario> results = em.createQuery(
+                    "SELECT u FROM Usuario u WHERE u.logi = :logi AND u.pass = :pass", Usuario.class)
+                    .setParameter("logi", logi)
+                    .setParameter("pass", pass)
+                    .getResultList();
+            return results.isEmpty() ? null : results.get(0);
+        } finally {
+            em.close();
+        }
+    }
+
+// Método main para probar la validación
+    public static void main(String[] args) {
+        // Cambia el nombre de la unidad de persistencia si es diferente en tu persistence.xml
+        EntityManagerFactory emf = javax.persistence.Persistence.createEntityManagerFactory("com.mycompany_chat_war_1.0-SNAPSHOTPU");
+        UsuarioJpaController dao = new UsuarioJpaController(emf);
+
+        // Prueba con logi y pass que existan en tu base de datos
+        String logi = "rick";
+        String pass = "1234";
+        Usuario usuario = dao.validarUsuario(logi, pass);
+
+        if (usuario != null) {
+            System.out.println("¡Usuario válido! Nombre: " + usuario.getNombres());
+        } else {
+            System.out.println("Usuario o contraseña incorrectos.");
+        }
+
+        emf.close();
+    }
+
 }
